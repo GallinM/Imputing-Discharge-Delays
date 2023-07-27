@@ -29,6 +29,8 @@ The identification of outliers is based on a cut-off value, this can be adjusted
 
 This process relies on a limited amount of data being missing. The greater the amount of missing data, the less reliable the imputation process.
 
+The multivariate imputation by chained equations process can take a long time.
+
 ## Contributing
 Contributions are greatly appreciated.
 
