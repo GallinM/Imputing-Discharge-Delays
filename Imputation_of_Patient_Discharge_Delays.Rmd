@@ -1,0 +1,172 @@
+---
+title: "Imputation_of_Discharge_Delays_Final"
+author: "Gallin Montgomery"
+date: '`r lubridate::today()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(dplyr, knitr, tidyr, data.table, ggplot2, mice, lubridate, reshape2)
+
+data <- read.csv("Discharges_to_impute.csv")
+data$Row.Labels <- as.Date(data$Row.Labels, format = "%d/%m/%Y")
+
+data <- data %>%
+  mutate(weekday = lubridate::wday(x = Row.Labels, label=TRUE))
+```
+
+```{r outliers}
+# create the outlier and replace function
+replace.outliers <- function(x){
+  k <- as.numeric(200)
+  library(EnvStats)
+  as.numeric(x)
+  testrosner <- rosnerTest(x, k = k, alpha = 0.001, warn = FALSE)
+  testrosner
+
+  outlier_table <- testrosner$all.stats
+
+  outlier_table <- outlier_table %>%
+  dplyr::filter(Outlier == "TRUE")
+
+  need_replacing <- outlier_table$Value
+
+  x[x %in% c(need_replacing)] <- NA
+  as.numeric(x)
+  return(data.table(x))
+}
+
+adjusted_data <- data %>%
+  select(-Row.Labels, -weekday) %>%
+    apply(2, replace.outliers)
+
+summary(adjusted_data)
+
+adjusted_data <- as.data.table(adjusted_data)
+
+```
+
+```{r ImputeAll}
+# Impute the missing data using multivariate imputation by chained equations
+tempDataALL <- adjusted_data %>%
+  mice(m=5,maxit=50,meth='pmm',seed=500)
+
+summary(tempDataALL)
+
+completedDataALL <- complete(tempDataALL,1) 
+
+completedDataALL <- cbind(completedDataALL, data[c("Row.Labels")])
+
+merged_data <- merge(completedDataALL, data, by = "Row.Labels", all.x = TRUE)
+
+# Variables with .x are imputed, variables with .y are original
+```
+
+# Visualisation of imputed data (red line) against original data (black line)
+```{r merged_data_graphs_outliers_impute}
+# Visualisations are created for individual hospital sites to show the imputed data vs the original data
+
+# Site33
+Site33 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site33.y, group = 1, colour = "Site33.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site33.x, colour = "Site33.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site33.x="red", Site33.y="black"))
+
+# Site118
+Site118 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site118.y, group = 1, colour = "Site118.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site118.x, colour = "Site118.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site118.x="red", Site118.y="black"))
+
+# Site78
+Site78 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site78.y, group = 1, colour = "Site78.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site78.x, colour = "Site78.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site78.x="red", Site78.y="black"))
+
+# Site66
+Site66 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site66.y, group = 1, colour = "Site66.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site66.x, colour = "Site66.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site66.y="black", Site66.x="red"))
+
+# Site75
+Site75 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site75.y, group = 1, colour = "Site75.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site75.x, colour = "Site75.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site75.x="red", Site75.y="black"))
+
+# Site72
+Site72 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site72.y, group = 1, colour = "Site72.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site72.x, colour = "Site72.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site72.x="red", Site72.y="black"))
+
+# Site13
+Site13 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site13.y, group = 1, colour = "Site13.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site13.x, colour = "Site13.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site13.x="red", Site13.y="black"))
+
+# Site6
+Site6 <- merged_data %>%
+  ggplot(aes(x = Row.Labels, y = Site6.y, group = 1, colour = "Site6.y")) +
+  geom_line(size = 2)+
+  scale_x_date(date_labels = "%m-%Y") +
+  geom_line(aes(x = Row.Labels,y = Site6.x, colour = "Site6.x"), size = 0.75) +
+  labs(x = "Date", y = "Number of Patients Ready for Discharge") +
+  scale_colour_manual(name="Line Color",
+                      values=c(Site6.x="red", Site6.y="black"))
+
+Site33
+Site118
+Site78
+Site66
+Site75
+Site72
+Site13
+Site6
+```
+
+```{r output_to_csv}
+Imputed_Data <- merged_data %>%
+  select(!ends_with(".y"))
+
+Original_Data <- merged_data %>%
+  select(!ends_with(".x"))
+
+write.csv(Imputed_Data, "Imputed_Data.csv")
+
+write.csv(Original_Data, "Original_Data.csv")
+```
+
