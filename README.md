@@ -1,5 +1,6 @@
 # Imputing-Discharge-Delays
 ![Discharge_Delays_image](https://github.com/GallinM/Imputing-Discharge-Delays/assets/101252813/74e1fcee-c7c3-498d-b913-7bd0d2ab5067)
+Example visualisation of imputed data (red line) against original data (black line)
 
 ## Important
 This uses dummy data for illustration purposes.
